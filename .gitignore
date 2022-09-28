@@ -1,23 +1,27 @@
 .DS_Store
 node_modules
 /dist
-
+/dist_public
 
 # local env files
+.env
 .env.local
 .env.*.local
 
-# Log files
+# Log and lock files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+yarn.lock
+package-lock.json
 
 # Editor directories and files
 .idea
 .vscode
+eslint.validate
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw*
+.prettierrc

@@ -1,0 +1,52 @@
+{
+  "persons": [
+    {
+      "avatar": "https://vsegda-pomnim.com/uploads/posts/2022-04/1649134317_94-vsegda-pomnim-com-p-krasota-prirodi-foto-104.jpg",
+      "fullName": "Ростомян Артём Давидович",
+      "dateOfBirth": "2002-10-12T18:00:00.000Z",
+      "gender": "Мужчина",
+      "post": "frontend",
+      "education": "Среднее",
+      "createdAt": "2022-08-31T13:38:38.604Z",
+      "id": 1
+    },
+    {
+      "avatar": "https://i.pinimg.com/736x/26/ae/18/26ae1867e48f39ac2c1f72c859ecabf2.jpg",
+      "fullName": "Джеки Чан",
+      "dateOfBirth": "1954-04-06T19:00:00.000Z",
+      "gender": "Мужчина",
+      "post": "backend",
+      "education": "Среднее",
+      "createdAt": "2022-08-31T13:37:34.985Z",
+      "id": 3
+    }
+  ],
+  "educations": [
+    {
+      "id": 1,
+      "title": "Высшее"
+    },
+    {
+      "id": 2,
+      "title": "Среднее"
+    },
+    {
+      "id": 3,
+      "title": "Отсутствует"
+    }
+  ],
+  "positions": [
+    {
+      "id": 1,
+      "title": "frontend"
+    },
+    {
+      "id": 2,
+      "title": "backend"
+    },
+    {
+      "id": 3,
+      "title": "fullstack"
+    }
+  ]
+}

@@ -1,24 +1,25 @@
-# testing-project-for-company
+# Привет! 
+## Поскольку нет полноценного апи (использую json-web-server) - некоторые подходы в коде можно назвать костылями
 
-## Project setup
-```
-npm install
-```
+## Описание проекта:
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+###
+    Данный проект является моим небольшим портфолио для ревью кода. Писал я его 5 дней без особой спешки.
+    Здесь нет авторизации, но я делал авторизацию через авторизационные куки + jwt-токен на другом проекте (ксати там был Nuxt, а это чутка усложняет задачку :) )
+    Также тут нет загрузки файлов через input type file, так как в качестве сервера в портфолио я использую json-web-server.
 
-### Compiles and minifies for production
-```
-npm run build
-```
+## В качестве фейкового апи буду использовать json-server
 
-### Lints and fixes files
-```
-npm run lint
-```
+## Команды:
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+1. Установка зависимостей:
+  - npm i
+
+2. Запуск json-сервера (Для этого используйте второе окно терминала):
+    * обязательно проверь что ты в нужной директории (в папке portfolio-rostomyan)
+  - json-server --watch db.json
+###
+    если у вас нет json-web-server - установите его npm install -g json-server
+
+3. Запуск сервера:
+  - npm run server 
