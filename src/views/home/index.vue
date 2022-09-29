@@ -41,16 +41,24 @@
         group="categories"
         animation="400"
         class="view-home__documents-categories"
-        @start="hideDocuments"
+        @start="categoriesStart"
+        @end="categoriesEnd"
       >
         <DocumentSection
-          v-for="documentSection in documentsCategories"
+          v-for="(documentSection, index) in documentsCategories"
           :key="documentSection.id"
           :documents="documents"
           :documentsElement="documentSection"
+          :categoriesMoving="categoriesMoving"
+          :searchingProcess="searchingProcess"
           class="view-home__document-item"
           @toggleDocumentsShow="toggleDocumentsShow(documentSection.id)"
           @showDocuments="showDocuments(documentSection.id)"
+          @addInCategoryDocuments="addInCategoryDocuments($event, index)"
+          @removeCategoryDocuments="removeCategoryDocuments($event, index)"
+          @moveCategoryDocuments="moveCategoryDocuments($event, index)"
+          @chooseCategoryDocuments="chooseCategoryDocuments($event, index)"
+          @dragenter.native="documentsDragenter($event, index)"
         />
       </Draggable>
 
@@ -60,23 +68,23 @@
         group="documents"
         animation="400"
         class="view-home__documents-separate"
-        @add="add"
-        @remove="remove"
-        @update="update"
-        @choose="choose"
-        @unchoose="unchoose"
-        @sort="sort"
-        @filter="filter"
-        @clone="clone"
-        @end="move"
+        @add="addInSeparateDocument"
+        @remove="removeSeparateDocument"
+        @choose="chooseSeparate"
+        @end="moveSeparate"
       >
         <DocumentItem
           v-for="documentItem in documentsSeparated"
+          :statuses="getStatuses(documentItem.statuses)"
           :key="documentItem.id"
           class="view-home__document-item view-home__document-item_separate"
         >
           <template v-slot:title-little>
             {{ documentItem.name }}
+          </template>
+
+          <template v-if="documentItem.require" v-slot:warning>
+            Обязательный
           </template>
 
           <template v-slot:description>
@@ -96,8 +104,9 @@ import DocumentSection from '@/components/home/documents/DocumentSection';
 import DocumentItem from '@/components/home/documents/DocumentItem';
 import VInput from '@/components/common/ui/VInput';
 import MagnifierIcon from '@/assets/icons/common/magnifier.svg';
-
 import CrossIcon from '@/assets/icons/common/cross.svg';
+
+import statusesMixin from '@/mixins/statuses';
 import { DOCUMENTS } from '@/utils/database-emulation/documents';
 
 export default {
@@ -112,6 +121,7 @@ export default {
     MagnifierIcon,
     CrossIcon,
   },
+  mixins: [statusesMixin],
 
   data() {
     return  {
@@ -121,6 +131,8 @@ export default {
         value: '',
         focused: false,
       },
+      actualElementData: null,
+      categoriesMoving: false,
     };
   },
   computed: {
@@ -137,11 +149,15 @@ export default {
             }
 
             if(item.data.length) {
-              const findSearchInDocumentsName =  item.data.find(item => {
-                return this.searchTextStatus(searchedValue, item.name) !== -1;
+              const newDataList = [];
+
+              item.data.forEach(dataItem => {
+                 const status = this.searchTextStatus(searchedValue, dataItem.name) !== -1;
+
+                 status ? newDataList.push(dataItem) : '';
               })
 
-              if(findSearchInDocumentsName) acc.push(item);
+              if(newDataList.length) acc.push({ ...item, data: newDataList});
             }
           } else if (item.type === 'document-item') {
             if(this.searchTextStatus(searchedValue, item.name) !== -1) acc.push(item);
@@ -158,11 +174,17 @@ export default {
     documentsSeparated() {
       return this.searchedDocuments.filter(item => item.type === 'document-item');
     },
+    searchingProcess() {
+      return !!(this.searchInput.value)
+    }
   },
 
-  mounted() {
+  created() {
     this.documents = DOCUMENTS.map(item => {
-      item.type === 'category' ? item.maxHeight = '0px' : '';
+      if(item.type === 'category') {
+        item.maxHeight = '35px';
+        item.dragenter = false;
+      }
 
       return item;
     })
@@ -191,38 +213,92 @@ export default {
 
       actualElement ? actualElement.opened = true : '';
     },
-    move(data) {
-      console.log(data);
+    categoriesStart() {
+      this.hideDocuments();
+      this.clearDragenter();
+      this.categoriesMoving = true;
     },
-    add() {
-      console.log('add');
+    categoriesEnd() {
+      this.clearDragenter();
+      this.categoriesMoving = false;
     },
-    remove() {
-      console.log('remove');
+
+    addInCategoryDocuments({ pullMode, newIndex, }, index) {
+      let elIndex = index;
+
+      if(this.searchingProcess) {
+        const actualElement = this.searchedDocuments[index];
+        this.documents.indexOf(actualElement) !== -1 ? elIndex = this.documents.indexOf(actualElement) : ''
+      }
+
+      if(pullMode) this.documents[elIndex].data.splice(newIndex, 0, this.actualElementData);
     },
-    update() {
-      console.log('update');
+    removeCategoryDocuments({ pullMode, oldIndex }, index) {
+      if(pullMode) this.documents[index].data.splice(oldIndex, 1);
     },
-    choose() {
-      console.log('choose');
+    chooseCategoryDocuments({ oldIndex }, parentIndex) {
+      this.actualElementData = this.documents[parentIndex].data[oldIndex];
     },
-    unchoose() {
-      console.log('unchoose');
+    moveCategoryDocuments({ pullMode, oldIndex, newIndex }, index) {
+      if(!pullMode) {
+        const item = this.documents[index].data.splice(oldIndex, 1);
+        this.documents[index].data.splice(newIndex, 0, item[0]);
+      }
+
+      this.clearDragenter();
     },
-    sort(data) {
-      console.log(data);
+    addInSeparateDocument({ pullMode, newIndex }) {
+      if(pullMode) {
+        if(newIndex >= this.documentsSeparated.length) {
+          this.documents.push(this.actualElementData);
+
+          return;
+        }
+
+        const actualIndex = this.documents.indexOf(this.documentsSeparated[newIndex]);
+        this.documents.splice(actualIndex, 0, this.actualElementData);
+      }
     },
-    filter() {
-      console.log('filter');
+    removeSeparateDocument({ pullMode }) {
+      if(pullMode) {
+        const elementIndex = this.documents.indexOf(this.actualElementData);
+
+        if(elementIndex !== -1) this.documents.splice(elementIndex, 1);
+      }
     },
-    clone() {
-      console.log('clone');
+    chooseSeparate({ oldIndex }) {
+      const elementIndex = this.documents.indexOf(this.documentsSeparated[oldIndex]);
+
+      if(elementIndex !== -1) {
+        this.actualElementData = this.documents[elementIndex];
+      }
+    },
+    moveSeparate({ pullMode, oldIndex, newIndex }) {
+      const oldElement = this.documentsSeparated[oldIndex];
+      const newElement = this.documentsSeparated[newIndex];
+
+      const oldElementIndex = this.documents.indexOf(oldElement);
+      const newElementIndex = this.documents.indexOf(newElement);
+
+      if(!pullMode) {
+        const item = this.documents.splice(oldElementIndex, 1);
+        this.documents.splice(newElementIndex, 0, item[0]);
+      }
+
+      this.clearDragenter();
+    },
+
+    documentsDragenter(event, index) {
+      this.documents[index].dragenter = true;
+    },
+    clearDragenter() {
+      this.documents.forEach(item => item.dragenter ? item.dragenter = false : '');
     },
   },
 }
 </script>
 
-@<style lang="scss" scoped>
+<style lang="scss" scoped>
 .view-home {
   padding-top: 33px;
 }
@@ -234,11 +310,19 @@ export default {
 .view-home__search-input {
   width: 564px;
   display: inline-block;
+
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 }
 
 .view-home__documents-container {
-  width: 1160px;
+  max-width: 1190px;
   margin-top: 17px;
+
+  @media (max-width: 1220px) {
+    max-width: 1160px;
+  }
 }
 
 .view-home__document-item {

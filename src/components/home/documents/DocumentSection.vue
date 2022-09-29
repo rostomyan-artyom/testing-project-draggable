@@ -1,11 +1,14 @@
 <template>
   <div class="document-section-item">
-    <DocumentItem class="document-section-item__category">
+    <DocumentItem
+      :statuses="getStatuses(documentsElement.statuses)"
+      class="document-section-item__category"
+    >
       <template v-slot:show-btn>
         <VButton
           :class="[
             'document-section-item__btn',
-            { 'document-section-item__btn_opened': documentsElement.opened },
+            { 'document-section-item__btn_opened': categoryShow },
           ]"
           @click.native="toggleDocumentsShow"
         >
@@ -17,6 +20,10 @@
 
       <template v-slot:title-big>
         {{ documentsElement.name }}
+      </template>
+
+      <template v-if="documentsElement.require" v-slot:warning>
+        Обязательный
       </template>
 
       <template v-slot:description>
@@ -31,7 +38,7 @@
       }"
       :class="[
         'document-section-item__documents-container',
-        { 'document-section-item__documents-container_opened': documentsElement.opened },
+        { 'document-section-item__documents-container_opened': categoryShow },
       ]"
     >
       <Draggable
@@ -40,25 +47,30 @@
         ghostClass="on-drag"
         group="documents"
         animation="400"
-        class="document-section-item__documents-list"
         @add="add"
+        @remove="$emit('removeCategoryDocuments', $event)"
+        @choose="$emit('chooseCategoryDocuments', $event)"
         @end="move"
+        @dragleave.native="calculateHeight"
       >
-        <template v-if="documentsElement.data.length">
-          <DocumentItem
-            v-for="documentItem in documentsElement.data"
-            :key="documentItem.id"
-            class="document-section-item__document"
-          >
-            <template v-slot:title-little>
-              {{ documentItem.name }}
-            </template>
+        <DocumentItem
+          v-for="documentItem in documentsElement.data"
+          :statuses="getStatuses(documentItem.statuses)"
+          :key="documentItem.id"
+          class="document-section-item__document"
+        >
+          <template v-slot:title-little>
+            {{ documentItem.name }}
+          </template>
 
-            <template v-slot:description>
-              {{ documentsElement.description }}
-            </template>
-          </DocumentItem>
-        </template>
+          <template v-if="documentItem.require" v-slot:warning>
+            Обязательный
+          </template>
+
+          <template v-slot:description>
+            {{ documentItem.description }}
+          </template>
+        </DocumentItem>
       </Draggable>
     </div>
   </div>
@@ -70,6 +82,8 @@ import DocumentItem from '@/components/home/documents/DocumentItem';
 import VButton from '@/components/common/ui/VButton';
 import ArrowIcon from '@/assets/icons/common/arrow.svg';
 
+import statusesMixin from '@/mixins/statuses';
+
 export default {
   name: 'DocumentSection',
   components: {
@@ -78,41 +92,81 @@ export default {
     VButton,
     ArrowIcon,
   },
+  mixins: [statusesMixin],
 
   props: {
     documentsElement: {
       type: Object,
       default: () => ({}),
     },
+    categoriesMoving: {
+      type: Boolean,
+      default: false,
+    },
+    searchingProcess: {
+      type: Boolean,
+      default: false,
+    },
   },
   data: () => ({
     actualHeight: '0px',
   }),
-
   computed: {
     documentsContainerHeight() {
-      if(!this.documentsElement.opened) return '0px';
+      if(this.categoryShow) return this.actualHeight;
 
-      return this.actualHeight;
+      return '0px';
+    },
+    categoryShow() {
+      return this.documentsElement.opened ||
+        this.searchingProcess ||
+        this.documentsElement.dragenter &&
+        !this.categoriesMoving
+    }
+  },
+
+  mounted() {
+    this.calculateHeight();
+  },
+
+  watch: {
+    'documentsElement.dragenter'() {
+      this.calculateHeight();
+    },
+    'documentsElement.opened'() {
+      this.calculateHeight();
+    },
+    searchingProcess() {
+      this.calculateHeight();
     }
   },
 
   methods: {
     calculateHeight() {
-      this.actualHeight = this.$refs['section-documents'].$el.clientHeight + 'px';
+      let blockHeight = this.$refs['section-documents'].$el.clientHeight
+      if(this.documentsElement.dragenter) blockHeight += 35;
+
+      this.actualHeight = blockHeight + 'px';
     },
     toggleDocumentsShow() {
       this.$emit('toggleDocumentsShow');
       this.calculateHeight();
     },
-    add() {
-      this.calculateHeight();
+    add(e) {
       this.$emit('showDocuments');
+      this.$emit('addInCategoryDocuments', e);
+
+      this.$nextTick(() => {
+        this.calculateHeight();
+      })
     },
-    move(data) {
-      console.log(data);
-      this.calculateHeight();
-    },
+    move(e) {
+      this.$emit('moveCategoryDocuments', e);
+
+      this.$nextTick(() => {
+        this.calculateHeight();
+      })
+    }
   },
 }
 </script>

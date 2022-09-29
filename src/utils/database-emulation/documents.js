@@ -5,6 +5,7 @@ export const DOCUMENTS = [
     name: 'Обязательные для всех',
     description: 'Документы, обязательные для всех сотрудников без исключения',
     opened: false,
+    statuses: ['a', 'b', 'c'],
     data: [
       {
         id: 1,
@@ -13,6 +14,7 @@ export const DOCUMENTS = [
         require: true,
         forAll: true,
         description: 'Для всех',
+        statuses: ['d'],
       },
       {
         id: 2,
@@ -48,6 +50,7 @@ export const DOCUMENTS = [
     id: 5,
     type: 'document-item',
     name: 'Трудовой договор',
+    statuses: ['e', 'f'],
   },
   {
     id: 6,

@@ -19,6 +19,7 @@ export default {
 .layout-empty__container {
   max-width: 1800px;
   margin: 0 auto;
+
   @media (max-width: 1820px) {
     padding: 0 20px;
   }

@@ -10,6 +10,21 @@
       <slot name="title-little" />
     </p>
 
+    <div v-if="statuses.length" class="document-item__circle-statuses">
+      <span
+        v-for="(item, index) in statuses"
+        :style="item.style"
+        :key="index"
+        class="document-item__circle-item"
+      >
+        <component :is="item.icon" />
+      </span>
+    </div>
+
+    <p v-if="$slots.warning"  class="document-item__warning">
+      <slot name="warning" />
+    </p>
+
     <p v-if="$slots.description" class="document-item__description">
       <slot name="description" />
     </p>
@@ -43,6 +58,12 @@ export default {
     DocumentSectionItem,
   },
 
+  props: {
+    statuses: {
+      type: Array,
+      default: () => ([]),
+    },
+  },
   data() {
     return {
       actions: [
@@ -97,10 +118,32 @@ export default {
   line-height: 108%;
   color: #000000;
   white-space: nowrap;
+
   &_big {
     font-weight: 500;
     font-size: 15px;
     margin: 0 0 0 14px;
   }
+}
+
+.document-item__circle-statuses {
+  display: flex;
+  align-items: center;
+  margin-left: 16px;
+  gap: 6px;
+}
+
+.document-item__circle-item {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.document-item__warning {
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 108%;
+  color: #FF238D;
+  margin-left: 15px;
 }
 </style>
